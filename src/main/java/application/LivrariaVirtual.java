@@ -6,6 +6,7 @@ import java.util.Scanner;
 import db.LivrariaVirtualDAO;
 import entities.Eletronico;
 import entities.Impresso;
+import entities.Livro;
 import entities.Venda;
 
 public class LivrariaVirtual {
@@ -86,10 +87,10 @@ public class LivrariaVirtual {
 
 	public void adicionarLivroImpresso(Impresso livro) {
 		if (livro != null && getNumImpressos() < MAX_IMPRESSOS) {
-			impressos[getNumImpressos()] = livro;
+			getImpressos()[getNumImpressos()] = livro;
 			setNumImpressos(getNumImpressos() + 1);
 			System.out.println("Livro impresso cadastrado.");
-			
+
 			LivrariaVirtualDAO livrariaDAO = new LivrariaVirtualDAO();
 			livrariaDAO.cadastrarLivroNoBanco(livro);
 		} else {
@@ -103,10 +104,10 @@ public class LivrariaVirtual {
 
 	public void adicionarLivroEletronico(Eletronico livro) {
 		if (livro != null && getNumEletronicos() < MAX_ELETRONICOS) {
-			eletronicos[getNumEletronicos()] = livro;
+			getEletronicos()[getNumEletronicos()] = livro;
 			setNumEletronicos(getNumEletronicos() + 1);
 			System.out.println("Livro eletrônico cadastrado.");
-			
+
 			LivrariaVirtualDAO livrariaDAO = new LivrariaVirtualDAO();
 			livrariaDAO.cadastrarLivroNoBanco(livro);
 		} else {
@@ -116,10 +117,6 @@ public class LivrariaVirtual {
 
 	public Venda[] getVendas() {
 		return vendas;
-	}
-
-	public void setVendas(Venda[] vendas) {
-		this.vendas = vendas;
 	}
 
 	public void cadastrarLivro() {
@@ -279,9 +276,9 @@ public class LivrariaVirtual {
 					venda.addLivro(livro, i);
 
 					if (venda.getLivros()[i] != null) {
-						i++;
 						livro.atualizarEstoque();
 						System.out.println("Livro adicionado.");
+						i++;
 					}
 					break;
 				}
@@ -297,8 +294,8 @@ public class LivrariaVirtual {
 					venda.addLivro(livro, i);
 
 					if (venda.getLivros()[i] != null) {
-						i++;
 						System.out.println("Livro adicionado.");
+						i++;
 					}
 					break;
 				}
@@ -313,10 +310,13 @@ public class LivrariaVirtual {
 			}
 
 			if (getNumVendas() < MAX_VENDAS) {
-				vendas[getNumVendas()] = venda;
+				getVendas()[getNumVendas()] = venda;
 				venda.finalizarVenda();
 				setNumVendas(getNumVendas() + 1);
 				System.out.println("Venda cadastrada.");
+
+				LivrariaVirtualDAO livrariaDAO = new LivrariaVirtualDAO();
+				livrariaDAO.cadastrarVendaNoBanco(venda);
 			} else {
 				System.out.println("Erro ao cadastrar venda: atingida a quantidade máxima de vendas.");
 			}
@@ -360,10 +360,8 @@ public class LivrariaVirtual {
 	}
 
 	public void listarLivros() {
-		LivrariaVirtualDAO livrariaDAO = new LivrariaVirtualDAO();
-		livrariaDAO.listarTodosLivros();
-//		listarLivrosImpressos();
-//		listarLivrosEletronicos();
+		listarLivrosImpressos();
+		listarLivrosEletronicos();
 	}
 
 	public void listarVendas() {
@@ -375,7 +373,9 @@ public class LivrariaVirtual {
 					return;
 				}
 				System.out.println("Venda " + venda.getNumero());
+				System.out.println("Cliente: " + venda.getCliente());
 				venda.listarLivros();
+				System.out.println("Total: " + venda.getValor());
 				System.out.println("---------------------");
 			}
 		} else {
@@ -383,9 +383,47 @@ public class LivrariaVirtual {
 		}
 	}
 
+	public void carregarInformacoesDoBanco() {
+	    LivrariaVirtualDAO livrariaDAO = new LivrariaVirtualDAO();
+
+	    Livro[] livros = livrariaDAO.consultarLivros();
+	    if (livros != null && livros.length > 0) {
+	        for (Livro livro : livros) {
+	            if (livro instanceof Impresso) {
+	                Impresso impresso = (Impresso) livro;
+	                if (getNumImpressos() < MAX_IMPRESSOS) {
+	                    getImpressos()[getNumImpressos()] = impresso;
+	                    setNumImpressos(getNumImpressos() + 1);
+	                }
+	            } else if (livro instanceof Eletronico) {
+	                Eletronico eletronico = (Eletronico) livro;
+	                if (numEletronicos < MAX_ELETRONICOS) {
+	                    getEletronicos()[getNumEletronicos()] = eletronico;
+	                    setNumEletronicos(getNumEletronicos() + 1);
+	                }
+	            }
+	        }
+	    }
+
+	    Venda[] vendas = livrariaDAO.consultarVendas();
+	    if (vendas != null && vendas.length > 0) {
+	        for (Venda venda : vendas) {
+	            if (getNumVendas() < MAX_VENDAS) {
+	                getVendas()[getNumVendas()] = venda;
+	                venda.finalizarVenda();
+	                setNumVendas(getNumVendas() + 1);
+	            }
+	        }
+	        setNumVendas(vendas.length);
+	        Venda.setNumVendas(getNumVendas());
+	    }
+	}
+
 	public static void main(String[] args) {
 
 		LivrariaVirtual livraria = new LivrariaVirtual();
+
+		livraria.carregarInformacoesDoBanco();
 
 		int opcao;
 

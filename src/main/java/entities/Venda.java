@@ -18,8 +18,12 @@ public class Venda {
 		livros = new Livro[LivrariaVirtual.getMaxLivros()];
 	}
 
-	public int getNumVendas() {
+	public static int getNumVendas() {
 		return numVendas;
+	}
+
+	public static void setNumVendas(int numVendas) {
+		Venda.numVendas = numVendas;
 	}
 
 	public int getNumero() {
@@ -50,13 +54,23 @@ public class Venda {
 		return livros;
 	}
 
+	public void setLivros(Livro[] livros) {
+		this.livros = livros;
+	}
+
 	public void addLivro(Livro l, int index) {
 		if (index < 0 || index >= livros.length) {
 			throw new IndexOutOfBoundsException("Índice inválido: " + index);
 		}
 
 		livros[index] = l;
-		setValor(getValor() + l.getPreco());
+
+		if (l instanceof Impresso) {
+			Impresso impresso = (Impresso) l;
+			setValor(getValor() + l.getPreco() + impresso.getFrete());
+		} else {
+			setValor(getValor() + l.getPreco());
+		}
 	}
 
 	public void listarLivros() {
